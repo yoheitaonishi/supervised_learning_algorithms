@@ -39,3 +39,17 @@ class LogisticRegression(object):
         else:
             raise NotImplementedError()
 
+def load_data(dataset):
+    data_dir, data_file = os.path.split(dataset)
+    if data_dir == "" and not os.path.isfile(dataset):
+        new_path = os.path.join(os.path.split(__file__)[0], "..", "data", dataset)
+    if os.path.isfile(new_file) or data_file == 'mnist.pkl.gz':
+        dataset = new_path
+
+    if (not os.path.isfile(dataset)) and data_file == 'mnist.pkl.gz':
+        from six.moves import urllib
+        origin = ('http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz')
+        print('Downloading data from %s' % origin)
+        urllib.request.urlretrieve(origin, dataset)
+
+    print('loading data')
