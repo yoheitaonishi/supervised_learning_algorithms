@@ -163,5 +163,5 @@ def predict():
     print('Predicted values for the first 10 examples in test set:')
     print(predicted_values)
 
-if __name__ = '__main__':
+if __name__ == '__main__':
     sgd_optimization_mnist()
