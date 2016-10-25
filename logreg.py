@@ -149,4 +149,19 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000, dataset='mnist.pkl
     print('The code run for %d epochs, with %f epoch/sec' % (epoch, 1. * epoch / (end_time - start_time)))
     print(('The code for file ' + os.path.split(__file__)[1] + ' ran for %.1fs' % ((end_time - start_time))), file=sys.stderr)
 
-            
+def predict():
+    classifier = pickle.load('best_model.pkl')
+
+    predict_model = theano.function(inputs=[classifier.input], outputs=classifier.y_pred)
+    
+    dataset = 'mnist.pkl.gz'
+    datasets = load_data(dataset)
+    test_set_x, test_set_y = datasets[2]
+    test_set_x = test_set_z.get_value()
+
+    predicted_values = predict_model(test_set_x[:10])
+    print('Predicted values for the first 10 examples in test set:')
+    print(predicted_values)
+
+if __name__ = '__main__':
+    sgd_optimization_mnist()
