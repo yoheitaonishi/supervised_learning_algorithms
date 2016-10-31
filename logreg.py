@@ -17,8 +17,8 @@ class LogisticRegression(object):
     
     def __init__(self, input, n_in, n_out):
         # Create W(0 matrix) and b(0 vector)
-        self.W = theano.shared(value=numpy.zeros(n_in, n_out), dtype=theano.config.floatX), name='W', borrow=True)
-        self.b = theano.shared(value=numpy.zeros(n_out), dtype=theano.config.floatX), name='b', borrow=True)
+        self.W = theano.shared(value=numpy.zeros((n_in, n_out), dtype=theano.config.floatX), name='W', borrow=True)
+        self.b = theano.shared(value=numpy.zeros((n_out), dtype=theano.config.floatX), name='b', borrow=True)
 
         # Softmax
         self.p_y_given_x = T.nnet.softmax(T.dot(input, self.W) + self.b)
@@ -35,12 +35,15 @@ class LogisticRegression(object):
         # The mean Log-Likelihood across the minibatch
         # In multi-class logistic regression, it is very common to use the negative log likelihood as the loss
         # This is cost which we should decrease
-        return -T.mean(T.log(self.p_y_given_x)[T.arrange(y.shape[0]), y])
+        return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y])
 
     def errors(self, y):
+        # Check if y has same dimension of y_pred
         if y.ndim != self.y_pred.ndim:
             raise TypeError('y should have the same shape as self.y_pred', ('y', y.type, 'y_pred', self.y_pred.type))
+        # Check if y is of the correct datatype
         if y.dtype.startswith('int'):
+            # The T.neq operator returns a vector of 0s and 1s, where 1 represents a mistake in prediction
             return T.mean(T.neq(self.y_pred, y))
         else:
             raise NotImplementedError()
@@ -51,7 +54,7 @@ def load_data(dataset):
     data_dir, data_file = os.path.split(dataset)
     if data_dir == "" and not os.path.isfile(dataset):
         new_path = os.path.join(os.path.split(__file__)[0], "..", "data", dataset)
-    if os.path.isfile(new_file) or data_file == 'mnist.pkl.gz':
+    if os.path.isfile(new_path) or data_file == 'mnist.pkl.gz':
         dataset = new_path
 
     if (not os.path.isfile(dataset)) and data_file == 'mnist.pkl.gz':
@@ -109,7 +112,7 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000, dataset='mnist.pkl
     # The cost we minimize during training is the negative log likelihood of the model in symbolic format
     cost = classifier.negative_log_likelihood(y)
 
-    test_model = theano.functino(
+    test_model = theano.function(
         inputs=[index],
         outputs=classifier.errors(y),
         givens={
@@ -132,8 +135,8 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000, dataset='mnist.pkl
     g_b = T.grad(cost=cost, wrt=classifier.b)
 
     # Update the theta 
-    updates = [(classifier.W, classifier.W - learning_rate * g_W), (classifier.b, classifier.b - learning_rate * g_b)
-    train_model = theano.functino(
+    updates = [(classifier.W, classifier.W - learning_rate * g_W), (classifier.b, classifier.b - learning_rate * g_b)]
+    train_model = theano.function(
         inputs=[index],
         outputs=classifier.errors(y),
         updates=updates,
@@ -153,19 +156,24 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000, dataset='mnist.pkl
     validation_frequency = min(n_train_batches, patience // 2)
     best_validation_loss = numpy.inf
     test_score = 0.
-    start_time = timeit.default_time()
 
+
+    # Traning parameter
     done_looping = False
     epoch = 0
+
+    start_time = timeit.default_timer()
+
     while(epoch < n_epochs) and (not done_looping):
         epoch = epoch + 1
+        # Minibatch learning
         for minibatch_index in range(n_train_batches):
             minibatch_avg_cost = train_model(minibatch_index)
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
             if (iter + 1) % validation_frequency == 0:
                 validation_losses = [validate_model(i) for i in range(n_valid_batches)]
-                this_validation_loss = numpy.mean(validation_lossess)
+                this_validation_loss = numpy.mean(validation_losses)
 
                 print('epoch %i, minibatch %i/%i, validation error %f %%' % (epoch, minibatch_index + 1, n_train_batches, this_validation_loss * 100.))
 
@@ -187,7 +195,7 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000, dataset='mnist.pkl
                     break
 
     end_time = timeit.default_timer()
-    print(('Optimazation complete with best validation score of %f %%,' 'with test performance %f %%') % (best_validation_loss * 100., test_score * 100.)
+    print(('Optimazation complete with best validation score of %f %%,' 'with test performance %f %%') % (best_validation_loss * 100., test_score * 100.))
     print('The code run for %d epochs, with %f epoch/sec' % (epoch, 1. * epoch / (end_time - start_time)))
     print(('The code for file ' + os.path.split(__file__)[1] + ' ran for %.1fs' % ((end_time - start_time))), file=sys.stderr)
 
