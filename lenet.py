@@ -3,9 +3,7 @@ from __future__ import print_function
 import os
 import sys
 import timeit
-
 import numpy
-
 import theano
 from theano.tensor as T
 from theano.tensor.signal import pool
@@ -24,7 +22,7 @@ class LeNetConvPoolLayer(object):
         self.input = input
 
         fan_in = numpy.prod(filter_shape[1:])
-        fan_out = (filter_shape[0] * numpy.prod(filter_shape[2:]) // numpy.prod(poolside))
+        fan_out = (filter_shape[0] * numpy.prod(filter_shape[2:]) // numpy.prod(poolsize))
 
         # Initialize weights with random weights
         W_bound = numpy.sqrt(6. / (fan_in + fan_out))
@@ -188,12 +186,3 @@ if __name__=='__main__':
 
 def experiment(state, channel):
     evaluate_lenet5(state.learning_rate, dataset=state.dataset)
-
-
-
-
-
-
-
-
-
